@@ -20,6 +20,28 @@ return require('packer').startup(function(use)
   use 'hrsh7th/cmp-cmdline'
   use 'L3MON4D3/LuaSnip'
   use 'saadparwaiz1/cmp_luasnip'
+  
+  -- Cue language support
+  use 'jjo/vim-cue'
+  
+  -- Treesitter for better syntax highlighting
+  use {
+    'nvim-treesitter/nvim-treesitter',
+    run = function()
+      require('nvim-treesitter.install').update({ with_sync = true })
+    end,
+    config = function()
+      require('nvim-treesitter.configs').setup {
+        ensure_installed = { "lua", "vim", "vimdoc", "json", "yaml", "cue" },
+        sync_install = false,
+        auto_install = true,
+        highlight = {
+          enable = true,
+          additional_vim_regex_highlighting = false,
+        },
+      }
+    end
+  }
 
   -- Auto pairs
   use 'windwp/nvim-autopairs'
@@ -107,6 +129,10 @@ return require('packer').startup(function(use)
 
   -- Colorscheme
   use 'folke/tokyonight.nvim'
+  
+  -- Additional colorful schemes
+  use { 'catppuccin/nvim', as = 'catppuccin' }
+  use { 'EdenEast/nightfox.nvim' }
 
   -- Indent guides
   use { "lukas-reineke/indent-blankline.nvim", main = "ibl" }

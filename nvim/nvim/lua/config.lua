@@ -41,6 +41,26 @@ local on_attach = function(client, bufnr)
     vim.api.nvim_create_autocmd("BufWritePre", {
       buffer = bufnr,
       callback = function()
+        -- For Go files, special handling to ensure imports are properly managed
+        if vim.bo[bufnr].filetype == "go" then
+          -- Organize imports - this explicitly asks gopls to add missing imports and remove unused ones
+          local params = vim.lsp.util.make_range_params()
+          params.context = { only = {"source.organizeImports"} }
+          
+          -- Request the imports to be organized
+          local result = vim.lsp.buf_request_sync(bufnr, "textDocument/codeAction", params, 3000)
+          for _, res in pairs(result or {}) do
+            for _, r in pairs(res.result or {}) do
+              if r.edit then
+                vim.lsp.util.apply_workspace_edit(r.edit, "UTF-8")
+              elseif r.command then
+                vim.lsp.buf.execute_command(r.command)
+              end
+            end
+          end
+        end
+        
+        -- Standard format
         vim.lsp.buf.format({ bufnr = bufnr })
       end,
     })
@@ -57,13 +77,27 @@ lspconfig.gopls.setup {
         unusedparams = true,
         shadow = true,        -- Check for shadowed variables
         unusedwrite = true,   -- Check for unused writes
-        useany = true,       -- Check for constraints that could be relaxed
+        useany = true,        -- Check for constraints that could be relaxed
+        unusedvariable = true, -- Add this to detect unused variables
       },
       staticcheck = true,
       gofumpt = true,
       usePlaceholders = true,
       completeUnimported = true,
       experimentalPostfixCompletions = true,
+      
+      -- This is crucial for auto-imports and unused import removal
+      codelenses = {
+        gc_details = true,
+        generate = true,
+        regenerate_cgo = true,
+        run_govulncheck = true,
+        test = true,
+        tidy = true,
+        upgrade_dependency = true,
+        vendor = true,
+      },
+      
       hints = {
         assignVariableTypes = true,
         compositeLiteralFields = true,
@@ -315,3 +349,50 @@ vim.keymap.set('n', '<C-y>', '3<C-y>', { desc = 'Scroll up 3 lines' })
 -- Jump paragraphs and center
 vim.keymap.set('n', '}', '}zz', { desc = 'Jump to next paragraph and center' })
 vim.keymap.set('n', '{', '{zz', { desc = 'Jump to previous paragraph and center' })
+
+-- Go-specific keybindings
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "go",
+  callback = function()
+    local bufnr = vim.api.nvim_get_current_buf()
+    -- Add import organization keybinding for Go files
+    vim.keymap.set('n', '<leader>gi', function()
+      -- Organize imports - requests gopls to add missing imports and remove unused ones
+      local params = vim.lsp.util.make_range_params()
+      params.context = { only = {"source.organizeImports"} }
+      
+      -- Request the imports to be organized
+      local result = vim.lsp.buf_request_sync(bufnr, "textDocument/codeAction", params, 3000)
+      for _, res in pairs(result or {}) do
+        for _, r in pairs(res.result or {}) do
+          if r.edit then
+            vim.lsp.util.apply_workspace_edit(r.edit, "UTF-8")
+          elseif r.command then
+            vim.lsp.buf.execute_command(r.command)
+          end
+        end
+      end
+      
+      -- Notify the user
+      vim.notify("Go imports organized", vim.log.levels.INFO)
+    end, { desc = 'Organize Go imports', buffer = bufnr })
+  end
+})
+
+-- Verify gopls is working correctly on startup
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LspAttached",
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client and client.name == "gopls" then
+      vim.notify("gopls attached with auto-imports enabled", vim.log.levels.INFO)
+    end
+  end
+})
+
+-- Create the LspAttached event when an LSP attaches
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    vim.api.nvim_exec_autocmds("User", { pattern = "LspAttached", data = args })
+  end
+})
