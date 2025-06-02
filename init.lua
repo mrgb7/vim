@@ -10,8 +10,22 @@ vim.g.mapleader = ' '
 -- Load plugins
 require('plugins')
 
+-- Load colorscheme configuration (this also applies the default theme)
+require('colorscheme')
+
+-- Available theme commands:
+-- :ThemeCatppuccin - Colorful modern theme with pastel colors
+-- :ThemeTokyonight - A clean, dark Neovim theme
+-- :ThemeNightfox - A dark color scheme based loosely on Nord
+-- :ThemeDuskfox - Purple-tinted version of Nightfox
+-- :ThemeNordfox - Arctic, north-bluish color theme
+-- :ThemeTerafox - A dark, vibrant theme with blue-green tint
+-- :ThemeCarbonfox - Desaturated theme for focus
+
 -- Load configurations
 require('config')
+require('statusline')
+require('indent_config')
 
 -- Basic settings
 vim.opt.number = true

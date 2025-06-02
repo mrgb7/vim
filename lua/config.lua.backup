@@ -1,25 +1,16 @@
 -- LSP configuration
--- Only require Mason if it's available
-local mason_ok, mason = pcall(require, 'mason')
-if mason_ok then
-  mason.setup()
-end
-
-local mason_lspconfig_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
-if mason_lspconfig_ok then
-  mason_lspconfig.setup {
-    ensure_installed = { 
-      'gopls',      -- Go support (includes gotmpl)
-      'pyright',    -- Python support
-      'bashls',     -- Bash support
-      'yamlls',     -- YAML and Helm support
-      'lua_ls',     -- Lua support
-      'jsonls',     -- JSON support
-      'helm_ls',    -- Helm language server
-      'cuelsp',     -- CUE language server
-    }
+require('mason').setup()
+require('mason-lspconfig').setup {
+  ensure_installed = { 
+    'gopls',      -- Go support
+    'pyright',    -- Python support
+    'bashls',     -- Bash support
+    'yamlls',     -- YAML and Helm support
+    'lua_ls',     -- Lua support
+    'jsonls',     -- JSON support
+    'helm_ls',    -- Helm language server
   }
-end
+}
 
 -- Configure Nvim-tree
 require('nvim-tree').setup({
@@ -103,17 +94,10 @@ local on_attach = function(client, bufnr)
   end
 end
 
--- Configure gopls with template support
+-- Configure gopls
 lspconfig.gopls.setup {
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    on_attach(client, bufnr)
-    
-    -- Additional Go template specific setup
-    if vim.bo[bufnr].filetype == "gotmpl" then
-      vim.api.nvim_buf_set_option(bufnr, 'commentstring', '{{/* %s */}}')
-    end
-  end,
+  on_attach = on_attach,
   settings = {
     gopls = {
       analyses = {
@@ -128,9 +112,6 @@ lspconfig.gopls.setup {
       usePlaceholders = true,
       completeUnimported = true,
       experimentalPostfixCompletions = true,
-      
-      -- Enhanced template support
-      templateExtensions = { "gotmpl", "tmpl", "tpl" },
       
       -- This is crucial for auto-imports and unused import removal
       codelenses = {
@@ -155,7 +136,6 @@ lspconfig.gopls.setup {
       },
     },
   },
-  filetypes = { "go", "gomod", "gowork", "gotmpl" },
 }
 
 -- Enhanced YAML language server configuration for Helm and Kubernetes
@@ -241,43 +221,58 @@ lspconfig.helm_ls.setup {
   cmd = { "helm_ls", "serve" },
 }
 
--- Configure CUE language server as a custom server
-local configs = require 'lspconfig.configs'
-if not configs.cuelsp then
-  configs.cuelsp = {
-    default_config = {
-      cmd = { vim.fn.expand('~/.local/share/nvim/mason/bin/cuelsp') },
-      filetypes = { 'cue' },
-      root_dir = function(fname)
-        return require('lspconfig.util').find_git_ancestor(fname) or 
-               require('lspconfig.util').find_node_modules_ancestor(fname) or
-               require('lspconfig.util').path.dirname(fname)
-      end,
-      settings = {},
-    },
-  }
-end
-
-lspconfig.cuelsp.setup {
+-- Enhanced gopls configuration for Go templates
+lspconfig.gopls.setup {
   capabilities = capabilities,
   on_attach = function(client, bufnr)
     on_attach(client, bufnr)
     
-    -- Enable format on save for CUE files
-    if client.server_capabilities.documentFormattingProvider then
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        buffer = bufnr,
-        callback = function()
-          vim.lsp.buf.format({
-            bufnr = bufnr,
-            filter = function(client)
-              return client.name == "cuelsp"
-            end,
-          })
-        end,
-      })
+    -- Additional Go template specific setup
+    if vim.bo[bufnr].filetype == "gotmpl" then
+      vim.api.nvim_buf_set_option(bufnr, 'commentstring', '{{/* %s */}}')
     end
   end,
+  settings = {
+    gopls = {
+      analyses = {
+        unusedparams = true,
+        shadow = true,
+        unusedwrite = true,
+        useany = true,
+        unusedvariable = true,
+      },
+      staticcheck = true,
+      gofumpt = true,
+      usePlaceholders = true,
+      completeUnimported = true,
+      experimentalPostfixCompletions = true,
+      
+      -- Enhanced template support
+      templateExtensions = { "gotmpl", "tmpl", "tpl" },
+      
+      codelenses = {
+        gc_details = true,
+        generate = true,
+        regenerate_cgo = true,
+        run_govulncheck = true,
+        test = true,
+        tidy = true,
+        upgrade_dependency = true,
+        vendor = true,
+      },
+      
+      hints = {
+        assignVariableTypes = true,
+        compositeLiteralFields = true,
+        compositeLiteralTypes = true,
+        constantValues = true,
+        functionTypeParameters = true,
+        parameterNames = true,
+        rangeVariableTypes = true,
+      },
+    },
+  },
+  filetypes = { "go", "gomod", "gowork", "gotmpl" },
 }
 
 -- Treesitter configuration update
@@ -574,6 +569,3 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.api.nvim_exec_autocmds("User", { pattern = "LspAttached", data = args })
   end
 })
-
--- Load Helm and Go template specific configurations
-require('helm_gotmpl_config')

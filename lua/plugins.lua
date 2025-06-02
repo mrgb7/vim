@@ -35,6 +35,9 @@ return require('packer').startup(function(use)
   -- Cue language support
   use 'jjo/vim-cue'
   
+  -- Go template and Helm support
+  use 'towolf/vim-helm'
+  
   -- Treesitter for better syntax highlighting
   use {
     'nvim-treesitter/nvim-treesitter',
@@ -43,7 +46,7 @@ return require('packer').startup(function(use)
     end,
     config = function()
       require('nvim-treesitter.configs').setup {
-        ensure_installed = { "lua", "vim", "vimdoc", "json", "yaml", "cue" },
+        ensure_installed = { "lua", "vim", "vimdoc", "json", "yaml", "cue", "go", "gomod", "gosum", "gotmpl", "helm" },
         sync_install = false,
         auto_install = true,
         highlight = {
@@ -55,7 +58,31 @@ return require('packer').startup(function(use)
   }
 
   -- Auto pairs
-  use 'windwp/nvim-autopairs'
+  use {
+    'windwp/nvim-autopairs',
+    config = function()
+      require('nvim-autopairs').setup({
+        check_ts = true,
+        ts_config = {
+          lua = {'string', 'source'},
+          javascript = {'string', 'template_string'},
+          java = false,
+        },
+        disable_filetype = { "TelescopePrompt", "spectre_panel" },
+        fast_wrap = {
+          map = '<M-e>',
+          chars = { '{', '[', '(', '"', "'" },
+          pattern = string.gsub([[ [%'%"%)%>%]%)%}%,] ]], '%s+', ''),
+          offset = 0,
+          end_key = '$',
+          keys = 'qwertyuiopzxcvbnmasdfghjkl',
+          check_comma = true,
+          highlight = 'PmenuSel',
+          highlight_grey='LineNr'
+        },
+      })
+    end
+  }
 
   -- Comments
   use {

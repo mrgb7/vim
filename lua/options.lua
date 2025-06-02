@@ -59,13 +59,39 @@ vim.g.tokyonight_lualine_bold = true
 -- Set colorscheme
 vim.cmd('colorscheme tokyonight')
 
--- Cue language specific settings
+-- CUE language specific settings
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "cue",
   callback = function()
+    -- Indentation settings
     vim.opt_local.tabstop = 2
     vim.opt_local.shiftwidth = 2
     vim.opt_local.expandtab = true
+    vim.opt_local.softtabstop = 2
+    
+    -- CUE-specific editor settings
+    vim.opt_local.commentstring = "// %s"
+    vim.opt_local.formatoptions:append("c")
+    vim.opt_local.formatoptions:append("r")
+    vim.opt_local.formatoptions:append("o")
+    
+    -- Enable auto-formatting on save for CUE files
+    vim.opt_local.autoindent = true
+    vim.opt_local.smartindent = true
+    
+    -- CUE validation on save
+    vim.api.nvim_create_autocmd("BufWritePost", {
+      buffer = 0,
+      callback = function()
+        local file = vim.fn.expand('%:p')
+        if file ~= '' and vim.fn.executable('cue') == 1 then
+          vim.fn.system('cue vet ' .. vim.fn.shellescape(file))
+          if vim.v.shell_error ~= 0 then
+            vim.notify("CUE validation failed. Check :messages for details.", vim.log.levels.WARN)
+          end
+        end
+      end,
+    })
   end
 })
 

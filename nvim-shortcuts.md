@@ -1,5 +1,17 @@
 # Neovim Shortcuts Cheat Sheet
 
+## Theme Commands
+
+Use these commands to switch between colorful themes:
+
+- `:ThemeCatppuccin` - Colorful modern theme with pastel colors
+- `:ThemeTokyonight` - A clean, dark Neovim theme
+- `:ThemeNightfox` - A dark color scheme based loosely on Nord
+- `:ThemeDuskfox` - Purple-tinted version of Nightfox
+- `:ThemeNordfox` - Arctic, north-bluish color theme
+- `:ThemeTerafox` - A dark, vibrant theme with blue-green tint
+- `:ThemeCarbonfox` - Desaturated theme for focus
+
 ## Basic Navigation
 
 ### Word Navigation (Works in normal and insert mode)
@@ -35,6 +47,13 @@
 ### File Explorer (NvimTree)
 - `Space + e` - Toggle file explorer
 - `Space + E` - Focus file explorer
+- `m` - Move current file (when in NvimTree)
+- `a` - Create new file/directory (when in NvimTree)
+- `d` - Delete file/directory (when in NvimTree)
+- `r` - Rename file/directory (when in NvimTree)
+- `y` - Copy file name (when in NvimTree)
+- `Y` - Copy relative path (when in NvimTree)
+- `gy` - Copy absolute path (when in NvimTree)
 
 ## Code Navigation and LSP Features
 
@@ -166,3 +185,19 @@
 - Select text in visual mode + `y` - Copy selection
 - `p` - Paste after cursor
 - `P` - Paste before cursor
+
+### Undo/Redo Operations
+- `u` - Undo last change
+- `Ctrl + r` - Redo (reverse of undo)
+- `g-` - Go to older text state
+- `g+` - Go to newer text state
+
+### Recover Deleted Text
+- Immediately after deletion: `u` to undo
+- From register: Deleted text is stored in registers:
+  - `"` - Default register (last deleted or yanked text)
+  - `0` - Yank register (only yanked text, not deleted)
+  - `1-9` - Numbered registers (last 9 deletions)
+- View registers: `:reg` or `:registers`
+- Paste from specific register: `"<register>p` (e.g., `"0p`, `"1p`)
+- For large recoveries: `:earlier 5m` (go back 5 minutes)
