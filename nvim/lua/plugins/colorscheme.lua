@@ -32,7 +32,7 @@ return {
   {
     "catppuccin/nvim",
     name = "catppuccin",
-    enabled = true, -- Now enabled as primary theme
+    enabled = true, -- Enabled
     lazy = false,
     priority = 1000,
     config = function()
@@ -111,6 +111,21 @@ return {
         },
       })
       vim.cmd([[colorscheme github_light_default]])
+    end,
+  },
+
+  -- Ayu Light theme
+  {
+    "Shatur/neovim-ayu",
+    enabled = false, -- Disabled in favor of catppuccin
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('ayu').setup({
+        mirage = false, -- Set to `true` to use `mirage` variant instead of `dark` for dark background.
+        overrides = {}, -- A dictionary of group names, each associated with a dictionary of parameters (`bg`, `fg`, `sp` and `style`) and colors in hex.
+      })
+      vim.cmd([[colorscheme ayu-light]])
     end,
   },
 }
