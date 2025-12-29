@@ -99,6 +99,14 @@ vim.api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
+-- Enforce coding style: don't auto-continue comments on new line
+vim.api.nvim_create_autocmd("BufEnter", {
+  group = augroup("formatoptions_style"),
+  callback = function()
+    vim.opt.formatoptions:remove({ "c", "r", "o" })
+  end,
+})
+
 -- Prevent LSP formatting conflicts
 vim.api.nvim_create_autocmd("LspAttach", {
   group = augroup("lsp_format_disable"),

@@ -40,7 +40,7 @@ require("lazy").setup({
       disabled_plugins = {
         "gzip",
         "matchit",
-        "matchparen",
+        -- enable matchparen so matching brackets get highlighted
         "netrwPlugin",
         "tarPlugin",
         "tohtml",

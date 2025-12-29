@@ -105,3 +105,19 @@ end, { desc = "Live Grep" })
 map("n", "<leader>e", "<cmd>NvimTreeToggle<cr>", { desc = "Toggle File Tree" })
 
 -- ToggleTerm uses its own keymaps defined in the plugin file
+
+-- Editing ergonomics: keep clipboard content when deleting or replacing
+-- Visual delete without yanking by default; respect explicit registers
+map("x", "d", function()
+  return (vim.v.register == '"') and '"_d' or 'd'
+end, { expr = true, desc = "Delete without yanking" })
+-- Paste over selection without yanking the replaced text
+map("x", "p", '"_dP', { desc = "Paste without overwriting clipboard" })
+
+-- Normal-mode delete without yanking by default; respect explicit registers
+map("n", "d", function()
+  return (vim.v.register == '"') and '"_d' or 'd'
+end, { expr = true, desc = "Delete without yanking" })
+map("n", "D", function()
+  return (vim.v.register == '"') and '"_D' or 'D'
+end, { expr = true, desc = "Delete line without yanking" })
