@@ -42,6 +42,7 @@ return {
     vim.api.nvim_create_autocmd("LspAttach", {
       group = vim.api.nvim_create_augroup("UserLspConfig", {}),
       callback = function(ev)
+        local client = vim.lsp.get_client_by_id(ev.data.client_id)
         local opts = { buffer = ev.buf, silent = true }
 
         opts.desc = "Show LSP references"
@@ -82,6 +83,27 @@ return {
 
         opts.desc = "Restart LSP"
         keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
+
+        -- organize imports on save for Go
+        if client.name == "gopls" then
+          vim.api.nvim_create_autocmd("BufWritePre", {
+            group = vim.api.nvim_create_augroup("GoplsOrganizeImports", { clear = true }),
+            buffer = ev.buf,
+            callback = function()
+              local params = vim.lsp.util.make_range_params()
+              params.context = { only = { "source.organizeImports" } }
+              local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 1000)
+              for cid, res in pairs(result or {}) do
+                for _, r in pairs(res.result or {}) do
+                  if r.edit then
+                    local enc = (vim.lsp.get_client_by_id(cid) or {}).offset_encoding or "utf-16"
+                    vim.lsp.util.apply_workspace_edit(r.edit, enc)
+                  end
+                end
+              end
+            end,
+          })
+        end
       end,
     })
 
@@ -106,6 +128,8 @@ return {
         "prismals",
         "pyright",
         "gopls",
+        "yamlls",
+        "terraformls",
       },
       automatic_installation = true,
       handlers = {
@@ -113,6 +137,24 @@ return {
         function(server_name)
           lspconfig[server_name].setup({
             capabilities = capabilities,
+          })
+        end,
+        ["terraformls"] = function()
+          lspconfig["terraformls"].setup({
+            capabilities = capabilities,
+          })
+        end,
+        ["yamlls"] = function()
+          lspconfig["yamlls"].setup({
+            capabilities = capabilities,
+            settings = {
+              yaml = {
+                schemas = {
+                  ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*",
+                  ["https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1-standalone-strict/all.json"] = "/*.yaml",
+                },
+              },
+            },
           })
         end,
         ["svelte"] = function()
