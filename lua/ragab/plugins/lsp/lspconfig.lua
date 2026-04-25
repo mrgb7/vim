@@ -6,22 +6,14 @@ return {
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
     { "antosha417/nvim-lsp-file-operations", config = true },
-    { "folke/neodev.nvim", opts = {} },
+    { "folke/lazydev.nvim", ft = "lua", opts = {} },
   },
   config = function()
-    -- import lspconfig plugin safely
-    local lspconfig_ok, lspconfig = pcall(require, "lspconfig")
-    if not lspconfig_ok then
-      return
-    end
-
-    -- import cmp-nvim-lsp plugin
     local cmp_nvim_lsp_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
     if not cmp_nvim_lsp_ok then
       return
     end
 
-    -- import mason_lspconfig plugin
     local mason_lspconfig_ok, mason_lspconfig = pcall(require, "mason-lspconfig")
     if not mason_lspconfig_ok then
       vim.notify("mason-lspconfig not found", vim.log.levels.WARN)
@@ -30,10 +22,7 @@ return {
 
     local keymap = vim.keymap
 
-    -- used to enable autocompletion (assign to every lsp server config)
     local capabilities = cmp_nvim_lsp.default_capabilities()
-
-    -- extend capabilities for better LSP features
     capabilities.textDocument.completion.completionItem.snippetSupport = true
     capabilities.textDocument.completion.completionItem.resolveSupport = {
       properties = { "documentation", "detail", "additionalTextEdits" },
@@ -44,6 +33,11 @@ return {
       callback = function(ev)
         local client = vim.lsp.get_client_by_id(ev.data.client_id)
         local opts = { buffer = ev.buf, silent = true }
+
+        -- Enable inlay hints if supported
+        if client and client.server_capabilities.inlayHintProvider then
+          vim.lsp.inlay_hint.enable(false, { bufnr = ev.buf })
+        end
 
         opts.desc = "Show LSP references"
         keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
@@ -84,8 +78,13 @@ return {
         opts.desc = "Restart LSP"
         keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
 
+        opts.desc = "Toggle inlay hints"
+        keymap.set("n", "<leader>ih", function()
+          vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }), { bufnr = ev.buf })
+        end, opts)
+
         -- organize imports on save for Go
-        if client.name == "gopls" then
+        if client and client.name == "gopls" then
           vim.api.nvim_create_autocmd("BufWritePre", {
             group = vim.api.nvim_create_augroup("GoplsOrganizeImports", { clear = true }),
             buffer = ev.buf,
@@ -114,7 +113,7 @@ return {
       vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
     end
 
-    -- setup mason-lspconfig with ensure_installed and handlers
+    -- Ensure servers are installed via Mason
     mason_lspconfig.setup({
       ensure_installed = {
         "ts_ls",
@@ -132,97 +131,172 @@ return {
         "terraformls",
       },
       automatic_installation = true,
-      handlers = {
-        -- default handler for installed servers
-        function(server_name)
-          lspconfig[server_name].setup({
-            capabilities = capabilities,
-          })
-        end,
-        ["terraformls"] = function()
-          lspconfig["terraformls"].setup({
-            capabilities = capabilities,
-          })
-        end,
-        ["yamlls"] = function()
-          lspconfig["yamlls"].setup({
-            capabilities = capabilities,
-            settings = {
-              yaml = {
-                schemas = {
-                  ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*",
-                  ["https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1-standalone-strict/all.json"] = "/*.yaml",
-                },
-              },
-            },
-          })
-        end,
-        ["svelte"] = function()
-          lspconfig["svelte"].setup({
-            capabilities = capabilities,
-            on_attach = function(client, bufnr)
-              vim.api.nvim_create_autocmd("BufWritePost", {
-                pattern = { "*.js", "*.ts" },
-                callback = function(ctx)
-                  client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.match })
-                end,
-              })
-            end,
-          })
-        end,
-        ["graphql"] = function()
-          lspconfig["graphql"].setup({
-            capabilities = capabilities,
-            filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
-          })
-        end,
-        ["emmet_ls"] = function()
-          lspconfig["emmet_ls"].setup({
-            capabilities = capabilities,
-            filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
-          })
-        end,
-        ["lua_ls"] = function()
-          lspconfig["lua_ls"].setup({
-            capabilities = capabilities,
-            settings = {
-              Lua = {
-                diagnostics = {
-                  globals = { "vim" },
-                },
-                completion = {
-                  callSnippet = "Replace",
-                },
-              },
-            },
-          })
-        end,
-        ["gopls"] = function()
-          lspconfig["gopls"].setup({
-            capabilities = capabilities,
-            settings = {
-              gopls = {
-                usePlaceholders = false,
-                importShortcut = "Both",
-                showParameterizedQuickInfo = true,
-                semanticTokens = true,
-                codelens = {
-                  gc = true,
-                  generate = true,
-                  regenerate = true,
-                  run_govulncheck = true,
-                  test = true,
-                },
-                analyses = {
-                  unusedparams = true,
-                  nilness = true,
-                  shadow = true,
-                },
-              },
-            },
-          })
-        end,
+    })
+
+    -- Configure LSP servers using vim.lsp.config (nvim 0.11+)
+
+    -- Default capabilities for all servers
+    vim.lsp.config("*", {
+      capabilities = capabilities,
+    })
+
+    vim.lsp.config("cue", {
+      capabilities = capabilities,
+    })
+
+    vim.lsp.config("yamlls", {
+      capabilities = capabilities,
+      settings = {
+        yaml = {
+          schemas = {
+            ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*",
+            ["https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1-standalone-strict/all.json"] = "/*.yaml",
+          },
+        },
       },
+    })
+
+    vim.lsp.config("svelte", {
+      capabilities = capabilities,
+      on_attach = function(client, bufnr)
+        vim.api.nvim_create_autocmd("BufWritePost", {
+          pattern = { "*.js", "*.ts" },
+          callback = function(ctx)
+            client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.match })
+          end,
+        })
+      end,
+    })
+
+    vim.lsp.config("graphql", {
+      capabilities = capabilities,
+      filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
+    })
+
+    vim.lsp.config("emmet_ls", {
+      capabilities = capabilities,
+      filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
+    })
+
+    vim.lsp.config("lua_ls", {
+      capabilities = capabilities,
+      settings = {
+        Lua = {
+          diagnostics = {
+            globals = { "vim" },
+          },
+          completion = {
+            callSnippet = "Replace",
+          },
+          hint = {
+            enable = true,
+            setType = true,
+            paramType = true,
+            paramName = "All",
+            semicolon = "All",
+            arrayIndex = "Enable",
+          },
+        },
+      },
+    })
+
+    vim.lsp.config("gopls", {
+      capabilities = capabilities,
+      settings = {
+        gopls = {
+          usePlaceholders = false,
+          importShortcut = "Both",
+          showParameterizedQuickInfo = true,
+          semanticTokens = true,
+          hints = {
+            assignVariableTypes = true,
+            compositeLiteralFields = true,
+            compositeLiteralTypes = true,
+            constantValues = true,
+            functionTypeParameters = true,
+            parameterNames = true,
+            rangeVariableTypes = true,
+          },
+          codelens = {
+            gc = true,
+            generate = true,
+            regenerate = true,
+            run_govulncheck = true,
+            test = true,
+          },
+          analyses = {
+            unusedparams = true,
+            nilness = true,
+            shadow = true,
+          },
+        },
+      },
+    })
+
+    vim.lsp.config("ts_ls", {
+      capabilities = capabilities,
+      settings = {
+        typescript = {
+          inlayHints = {
+            includeInlayParameterNameHints = "all",
+            includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+            includeInlayFunctionParameterTypeHints = true,
+            includeInlayVariableTypeHints = true,
+            includeInlayVariableTypeHintsWhenTypeMatchesName = true,
+            includeInlayPropertyDeclarationTypeHints = true,
+            includeInlayFunctionLikeReturnTypeHints = true,
+            includeInlayEnumMemberValueHints = true,
+          },
+        },
+        javascript = {
+          inlayHints = {
+            includeInlayParameterNameHints = "all",
+            includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+            includeInlayFunctionParameterTypeHints = true,
+            includeInlayVariableTypeHints = true,
+            includeInlayVariableTypeHintsWhenTypeMatchesName = true,
+            includeInlayPropertyDeclarationTypeHints = true,
+            includeInlayFunctionLikeReturnTypeHints = true,
+            includeInlayEnumMemberValueHints = true,
+          },
+        },
+      },
+    })
+
+    vim.lsp.config("pyright", {
+      capabilities = capabilities,
+      settings = {
+        python = {
+          analysis = {
+            typeCheckingMode = "basic",
+            autoImportCompletions = true,
+            inlayHints = {
+              variableTypes = true,
+              functionReturnTypes = true,
+              callArgumentNames = true,
+              pytestParameters = true,
+            },
+          },
+        },
+      },
+    })
+
+    -- Enable all servers
+    vim.lsp.enable({
+      "ts_ls",
+      "html",
+      "cssls",
+      "tailwindcss",
+      "svelte",
+      "lua_ls",
+      "graphql",
+      "emmet_ls",
+      "prismals",
+      "pyright",
+      "gopls",
+      "yamlls",
+      "terraformls",
+      "cue",
     })
   end,
 }
