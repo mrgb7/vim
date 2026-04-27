@@ -2,28 +2,20 @@ return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
-    local status_ok, lualine = pcall(require, "lualine")
-    if not status_ok then
-      return
-    end
-    local lazy_status = require("lazy.status")
-
-    -- "auto" will set the theme dynamically based on the colorscheme
-    lualine.setup({
+    require("lualine").setup({
       options = {
-        theme = "auto",
+        theme = "catppuccin",
+        component_separators = "",
+        section_separators = "",
+        globalstatus = true,
       },
       sections = {
-        lualine_x = {
-          {
-            lazy_status.updates,
-            cond = lazy_status.has_updates,
-            color = { fg = "#ff9e64" },
-          },
-          { "encoding" },
-          { "fileformat" },
-          { "filetype" },
-        },
+        lualine_a = { { "mode", separator = { left = " ", right = " " }, right_padding = 2 } },
+        lualine_b = { "branch", "diff", "diagnostics" },
+        lualine_c = { { "filename", path = 1 } },
+        lualine_x = { "encoding", "fileformat", "filetype" },
+        lualine_y = { "progress" },
+        lualine_z = { "location" },
       },
     })
   end,

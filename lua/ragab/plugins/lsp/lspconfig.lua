@@ -206,7 +206,7 @@ return {
         gopls = {
           usePlaceholders = false,
           importShortcut = "Both",
-          showParameterizedQuickInfo = true,
+          
           semanticTokens = true,
           hints = {
             assignVariableTypes = true,
@@ -217,7 +217,7 @@ return {
             parameterNames = true,
             rangeVariableTypes = true,
           },
-          codelens = {
+          codelenses = {
             gc = true,
             generate = true,
             regenerate = true,
