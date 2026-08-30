@@ -148,10 +148,68 @@ return {
       capabilities = capabilities,
       settings = {
         yaml = {
-          schemas = {
-            ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*",
-            ["https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1-standalone-strict/all.json"] = "/*.yaml",
+          -- let yamlls fetch schemas from schemastore based on file content/name
+          schemaStore = {
+            enable = true,
+            url = "https://www.schemastore.org/api/json/catalog.json",
           },
+          validate = true,
+          completion = true,
+          hover = true,
+          format = {
+            enable = false, -- use prettier via none-ls instead
+          },
+          schemas = {
+            -- explicit overrides for files schemastore can't detect
+            ["https://json.schemastore.org/github-workflow.json"] = "/.github/workflows/*",
+            kubernetes = {
+              "**/deployment*.yaml",
+              "**/service*.yaml",
+              "**/ingress*.yaml",
+              "**/configmap*.yaml",
+              "**/secret*.yaml",
+              "**/statefulset*.yaml",
+              "**/daemonset*.yaml",
+              "**/cronjob*.yaml",
+              "**/job*.yaml",
+              "**/pod*.yaml",
+              "**/namespace*.yaml",
+              "**/pv*.yaml",
+              "**/pvc*.yaml",
+              "**/helmrelease*.yaml",
+              "**/k8s/**/*.yaml",
+              "**/kubernetes/**/*.yaml",
+              "**/manifests/**/*.yaml",
+            },
+          },
+          customTags = {
+            -- CloudFormation / AWS SAM tags
+            "!Ref scalar",
+            "!Sub scalar",
+            "!Sub sequence",
+            "!GetAtt scalar",
+            "!GetAtt sequence",
+            "!Join sequence",
+            "!Select sequence",
+            "!If sequence",
+            "!Equals sequence",
+            "!And sequence",
+            "!Or sequence",
+            "!Not sequence",
+            "!Condition scalar",
+            "!FindInMap sequence",
+            "!GetAZs scalar",
+            "!ImportValue scalar",
+            "!Base64 scalar",
+            "!Cidr sequence",
+            "!Split sequence",
+            "!Transform mapping",
+            -- common CI tags
+            "!reference sequence", -- GitLab
+          },
+        },
+        redhat = {
+          telemetry = { enabled = false },
         },
       },
     })
@@ -218,11 +276,11 @@ return {
             rangeVariableTypes = true,
           },
           codelenses = {
-            gc = true,
-            generate = true,
-            regenerate = true,
-            run_govulncheck = true,
-            test = true,
+            gc = false,
+            generate = false,
+            regenerate = false,
+            run_govulncheck = false,
+            test = false,
           },
           analyses = {
             unusedparams = true,

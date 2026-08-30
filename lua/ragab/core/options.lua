@@ -1,4 +1,14 @@
-vim.cmd("let g:netrw_liststyle = 3")
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+vim.api.nvim_create_autocmd("BufWritePre", {
+  callback = function(ev)
+    local dir = vim.fn.fnamemodify(ev.file, ":h")
+    if vim.fn.isdirectory(dir) == 0 then
+      vim.fn.mkdir(dir, "p")
+    end
+  end,
+})
 
 local opt = vim.opt -- for conciseness
 
@@ -44,3 +54,49 @@ opt.swapfile = false
 
 -- Disable Neovim 0.11 default snippet Tab/S-Tab mappings (we use Copilot instead)
 vim.g.no_default_snippets_keymaps = 1
+
+-- Enable trailing whitespace highlighting for markdown files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    -- Create highlight group for trailing whitespace
+    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
+    
+    -- Enable syntax highlighting for trailing whitespace in markdown files
+    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
+  end,
+})
+
+-- Enable trailing whitespace highlighting for markdown files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
+    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
+  end,
+})
+
+-- Enable trailing whitespace highlighting for markdown files
+vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
+vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
+
+-- Highlight trailing whitespace in markdown files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    -- Create highlight group for trailing whitespace
+    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
+    
+    -- Enable syntax highlighting for trailing whitespace in markdown files
+    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
+  end,
+})
+
+-- Highlight trailing whitespace in markdown files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
+    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
+  end,
+})

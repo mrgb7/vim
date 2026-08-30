@@ -31,5 +31,16 @@ keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" })
 keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" })
 keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" })
 
--- format buffer
-keymap.set("n", "<leader>gf", vim.lsp.buf.format, { desc = "Format buffer" })
+-- format buffer (prefer null-ls formatters like prettier, fall back to LSP)
+local function format_buffer()
+  vim.lsp.buf.format({
+    async = true,
+    filter = function(client)
+      if #vim.lsp.get_clients({ bufnr = 0, name = "null-ls" }) > 0 then
+        return client.name == "null-ls"
+      end
+      return true
+    end,
+  })
+end
+keymap.set({ "n", "v" }, "<leader>gf", format_buffer, { desc = "Format buffer/selection" })

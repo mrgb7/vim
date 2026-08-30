@@ -108,12 +108,14 @@ This document lists all the custom keymaps defined in the Neovim configuration.
 | N | `<leader>di` | `dap.step_into` | Step Into |
 | N | `<leader>do` | `dap.step_over` | Step Over |
 
-## File Explorer (Oil.nvim)
+## File Explorer (nvim-tree)
 
 | Mode | Key | Action | Description |
 |------|-----|--------|-------------|
-| N | `-` | `<CMD>Oil<CR>` | Open parent directory |
-| N | `<leader>ee` | `<CMD>Oil<CR>` | Open Oil |
+| N | `<leader>ee` | `<CMD>NvimTreeToggle<CR>` | Toggle file explorer |
+| N | `<leader>ef` | `<CMD>NvimTreeFindFileToggle<CR>` | Toggle file explorer on current file |
+| N | `<leader>ec` | `<CMD>NvimTreeCollapse<CR>` | Collapse file explorer |
+| N | `<leader>er` | `<CMD>NvimTreeRefresh<CR>` | Refresh file explorer |
 
 ## Copilot
 

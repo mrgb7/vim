@@ -13,5 +13,4 @@ return {
     end,
   },
   require("ragab.plugins.copilot"),
-  require("ragab.plugins.markview"),
 }

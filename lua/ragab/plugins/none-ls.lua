@@ -13,6 +13,9 @@ return {
         "goimports", -- auto import and remove unused imports
         "gofumpt", -- stricter gofmt
         "golangci-lint", -- linter
+        "markdownlint", -- markdown linter
+        "prettier", -- formatter for yaml/json/md/web files
+        "yamllint", -- yaml linter
       },
       automatic_installation = true,
     })
@@ -28,6 +31,12 @@ return {
         formatting.goimports,
         formatting.gofumpt,
         diagnostics.golangci_lint,
+        diagnostics.markdownlint,
+        -- yaml (and friends) formatting + linting
+        formatting.prettier.with({
+          filetypes = { "yaml", "json", "jsonc", "markdown" },
+        }),
+        diagnostics.yamllint,
       },
       -- configure format on save
       on_attach = function(current_client, bufnr)
