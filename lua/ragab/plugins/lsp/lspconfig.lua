@@ -127,6 +127,7 @@ return {
         "prismals",
         "pyright",
         "gopls",
+        "clangd",
         "yamlls",
         "terraformls",
       },
@@ -291,6 +292,18 @@ return {
       },
     })
 
+    -- C / C++. clangd takes its options on the command line, not from LSP
+    -- `settings`; project compile flags come from compile_commands.json /
+    -- compile_flags.txt (or a .clangd file) in the project root.
+    vim.lsp.config("clangd", {
+      capabilities = capabilities,
+      cmd = {
+        "clangd",
+        -- no argument placeholders in completions (cf. gopls usePlaceholders = false)
+        "--function-arg-placeholders=0",
+      },
+    })
+
     vim.lsp.config("ts_ls", {
       capabilities = capabilities,
       settings = {
@@ -352,6 +365,7 @@ return {
       "prismals",
       "pyright",
       "gopls",
+      "clangd",
       "yamlls",
       "terraformls",
       "cue",
