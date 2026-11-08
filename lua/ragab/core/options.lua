@@ -1,102 +1,83 @@
+local opt = vim.opt
+
+-- default file explorer is replaced by nvim-tree
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
-vim.api.nvim_create_autocmd("BufWritePre", {
-  callback = function(ev)
-    local dir = vim.fn.fnamemodify(ev.file, ":h")
-    if vim.fn.isdirectory(dir) == 0 then
-      vim.fn.mkdir(dir, "p")
-    end
-  end,
-})
-
-local opt = vim.opt -- for conciseness
+-- Mason-installed tools (LSPs, formatters, linters, debuggers) are visible to
+-- everything (conform, nvim-lint, go.nvim, terminals) before mason.nvim loads.
+local mason_bin = require("ragab.util").mason_bin
+if not vim.env.PATH:find(mason_bin, 1, true) then
+  vim.env.PATH = mason_bin .. ":" .. vim.env.PATH
+end
 
 -- line numbers
-opt.relativenumber = true -- show relative line numbers
-opt.number = true -- shows absolute line number on cursor line
+opt.number = true
+opt.relativenumber = true
 
--- tabs & indentation
-opt.tabstop = 2 -- 2 spaces for tabs (prettier default)
-opt.shiftwidth = 2 -- 2 spaces for indent width
-opt.expandtab = true -- expand tab to spaces
-opt.autoindent = true -- copy indent from current line when starting new one
+-- indentation (per-language overrides live in lua/ragab/langs; .editorconfig wins over both)
+opt.tabstop = 2
+opt.shiftwidth = 2
+opt.expandtab = true
+opt.smartindent = true
+opt.shiftround = true
 
--- line wrapping
-opt.wrap = false -- disable line wrapping
+-- long lines: soft-wrap at word boundaries, keep wrapped part indented (toggle: <leader>uw)
+opt.wrap = true
+opt.linebreak = true
+opt.breakindent = true
+opt.breakindentopt = "shift:2,sbr"
+opt.showbreak = "↪ "
+opt.smoothscroll = true
+opt.sidescrolloff = 8
+opt.scrolloff = 8
 
--- search settings
-opt.ignorecase = true -- ignore case when searching
-opt.smartcase = true -- if you include mixed case in your search, assume you want case-sensitive
-
--- cursor line
-opt.cursorline = true -- highlight the current cursor line
+-- search
+opt.ignorecase = true
+opt.smartcase = true
+opt.inccommand = "split" -- live preview of :s
+opt.grepprg = "rg --vimgrep --smart-case --hidden --glob=!.git/"
+opt.grepformat = "%f:%l:%c:%m"
 
 -- appearance
--- turn on termguicolors for nightfly colorscheme to work
--- (have to use iterm2 or any other true color terminal)
 opt.termguicolors = true
-opt.background = "dark" -- use light colorscheme variant
-opt.signcolumn = "yes" -- show sign column so that text doesn't shift
+opt.background = "light" -- catppuccin latte; <leader>ub switches to mocha
+opt.signcolumn = "yes"
+opt.cursorline = true
+opt.showmode = false -- lualine shows the mode
+opt.laststatus = 3 -- one global statusline
+opt.pumheight = 12
+opt.list = true
+opt.listchars = { tab = "» ", trail = "·", nbsp = "␣", extends = "›", precedes = "‹" }
+opt.fillchars = { eob = " ", fold = " ", foldopen = "▾", foldclose = "▸", foldsep = " " }
 
--- backspace
-opt.backspace = "indent,eol,start" -- allow backspace on indent, end of line or insert mode start position
+-- folding: treesitter based, everything open by default
+opt.foldmethod = "expr"
+opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+opt.foldtext = ""
+opt.foldlevel = 99
+opt.foldlevelstart = 99
 
--- clipboard
-opt.clipboard:append("unnamedplus") -- use system clipboard as default register
+-- editing
+opt.clipboard = "unnamedplus" -- yank/paste through the system clipboard
+opt.mouse = "a"
+opt.virtualedit = "block"
+opt.confirm = true -- ask instead of failing on :q with unsaved changes
 
--- split windows
-opt.splitright = true -- split vertical window to the right
-opt.splitbelow = true -- split horizontal window to the bottom
+-- windows
+opt.splitright = true
+opt.splitbelow = true
+opt.splitkeep = "screen"
 
--- turn off swapfile
+-- files: no swap, persistent undo
 opt.swapfile = false
+opt.undofile = true
+opt.undolevels = 10000
 
--- Disable Neovim 0.11 default snippet Tab/S-Tab mappings (we use Copilot instead)
-vim.g.no_default_snippets_keymaps = 1
+-- responsiveness
+opt.updatetime = 250
+opt.timeoutlen = 400
 
--- Enable trailing whitespace highlighting for markdown files
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function()
-    -- Create highlight group for trailing whitespace
-    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
-    
-    -- Enable syntax highlighting for trailing whitespace in markdown files
-    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
-  end,
-})
-
--- Enable trailing whitespace highlighting for markdown files
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function()
-    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
-    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
-  end,
-})
-
--- Enable trailing whitespace highlighting for markdown files
-vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
-vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
-
--- Highlight trailing whitespace in markdown files
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function()
-    -- Create highlight group for trailing whitespace
-    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
-    
-    -- Enable syntax highlighting for trailing whitespace in markdown files
-    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
-  end,
-})
-
--- Highlight trailing whitespace in markdown files
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function()
-    vim.cmd([[highlight TrailingWhitespace ctermbg=red guibg=red]])
-    vim.cmd([[syntax match TrailingWhitespace /\s\+$/ containedin=ALL]])
-  end,
-})
+-- completion / sessions
+opt.completeopt = "menu,menuone,noselect"
+opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
